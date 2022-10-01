@@ -4,7 +4,12 @@ const express = require('express');
 const app = express();
 const bodyParser = require('body-parser');
 
+//3.7
+const morgan = require('morgan');
+
 const PORT = 3000;
+
+//3.1
 let phonebook = [
   {
     id: 1,
@@ -28,7 +33,18 @@ let phonebook = [
   },
 ];
 
+const unknownEndpoint = (request, response) => {
+  response.status(404).send({ error: 'unknown endpoint' });
+};
+
+// 3.8
+
 app.use(express.json());
+morgan.token('type', (req, res) => JSON.stringify(req.body));
+
+app.use(
+  morgan(':method :url :status :res[content-length] - :response-time ms :type')
+);
 
 app.get('/', (req, res) => {
   res.send('Welcome to homepage');
@@ -37,6 +53,8 @@ app.get('/', (req, res) => {
 app.get('/api/persons', (req, res) => {
   res.send(phonebook);
 });
+
+// 3.3
 
 app.get('/api/persons/:id', (req, res) => {
   const param = Number(req.params.id);
@@ -47,10 +65,14 @@ app.get('/api/persons/:id', (req, res) => {
   res.send(find);
 });
 
+//3.2
+
 app.get('/info', (req, res) => {
   res.send(`Phonebook has info for ${phonebook.length} people
   ${new Date()}`);
 });
+
+// 3.4
 
 app.delete('/api/persons/:id', (req, res) => {
   const param = Number(req.params.id);
@@ -60,10 +82,13 @@ app.delete('/api/persons/:id', (req, res) => {
   console.log(`deleted id:${param}`);
 });
 
+// 3.5
+
 app.post('/api/persons', (req, res) => {
   const body = req.body;
-  const id = Math.ceil(Math.random() * 100);
+  const id = phonebook.length + 1;
 
+  // 3.6
   if (!body.name || !body.number) {
     return res.status(400).json({
       error: 'Missing Field',
@@ -92,11 +117,13 @@ app.post('/api/persons', (req, res) => {
     number: body.number,
     id: id,
   };
-  console.log(`${person.id} added`);
+  console.log(`new id:${person.id} is added`);
   phonebook = phonebook.concat(person);
 
   res.json(person);
 });
+
+app.use(unknownEndpoint);
 
 app.listen(PORT, () => {
   console.log(`Listening on Port ${PORT}`);
